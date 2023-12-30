@@ -1,0 +1,52 @@
+version: "3"
+services:
+    elasticsearch:
+        image: elasticsearch:7.12.0
+        container_name: elasticsearch
+        hostname: elasticsearch
+        environment:
+            - "discovery.type=single-node"
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        ports:
+            - 9200:9200
+            - 9300:9300
+        networks:
+            - elknetwork
+            
+    kibana:
+        image: kibana:7.12.0
+        container_name: kibana
+        hostname: kibana
+        ports:
+            - 5601:5601
+        links:
+            - elasticsearch:elasticsearch
+        depends_on:
+          - elasticsearch
+        networks:
+          - elknetwork
+        environment:
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+
+    logstash:
+        image: logstash:7.12.0
+        container_name: logstash
+        hostname: logstash
+        ports:
+            - 9600:9600
+            - 5044:5044
+        environment:
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+        volumes:
+          - .logstash:/usr/share/logstash/pipeline/
+        links:
+            - elasticsearch:elasticsearch
+        depends_on:
+          - elasticsearch
+        networks:
+          - elknetwork
+
+networks:
+    elknetwork:
+        name: elknetwork
+        driver: bridge
